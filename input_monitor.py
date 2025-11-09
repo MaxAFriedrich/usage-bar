@@ -23,7 +23,7 @@ BREAK_THRESHOLD = config['break_threshold']
 OVERSPEED_THRESHOLD = config['overspeed_threshold']
 OVERSPEED_COUNT_MULTIPLIER = config['overspeed_count_multiplier']
 MAX_OVERSPEED_PENALTY = config['max_overspeed_penalty']
-SOCKET_PATH = "/tmp/usage-bar-notification.sock"
+SOCKET_PATH = "/tmp/usage-bar.sock"
 
 # Shared data structure
 timestamps = []
@@ -178,13 +178,6 @@ def counter_thread():
 
             state.set(count)
 
-            # print(
-            #     f"count: {count}, last_zero: {state.last_zero}, "
-            #     f"overspeed_penalty: {state.overspeed_penalty} "
-            #     f"in_break {state.break_finish != -1} "
-            #     f"break_finish: {state.break_finish}"
-            # )
-            #
             time.sleep(0.1)
 
     except Exception as e:
@@ -197,11 +190,11 @@ def cleanup_devices(devices):
         os.close(fd)
 
 
-class NotificationState(str, Enum):
-    BREAK_OVER = "#007051"  # green
-    BREAK = "#142f8c"  # blue
-    TYPING = "#8C4914"  # orange
-    OVERSPEED = "#B70000"  # red
+class NotificationState(int, Enum):
+    BREAK_OVER = 0
+    BREAK = 1
+    TYPING = 2
+    OVERSPEED = 3
 
 
 notification_state = NotificationState.BREAK
@@ -214,14 +207,14 @@ def socket_server_thread():
     # Remove existing socket file if it exists
     if os.path.exists(SOCKET_PATH):
         os.unlink(SOCKET_PATH)
-    
+
     server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server_socket.bind(SOCKET_PATH)
     server_socket.listen(5)
     server_socket.settimeout(1.0)
-    
+
     print(f"Socket server listening on {SOCKET_PATH}")
-    
+
     while not stop_event.is_set():
         try:
             client_socket, _ = server_socket.accept()
@@ -233,7 +226,7 @@ def socket_server_thread():
         except Exception as e:
             if not stop_event.is_set():
                 print(f"Socket server error: {e}")
-    
+
     server_socket.close()
     if os.path.exists(SOCKET_PATH):
         os.unlink(SOCKET_PATH)
@@ -248,7 +241,7 @@ def broadcast_notification_state(state_color):
                 client.sendall(f"{state_color}\n".encode())
             except Exception:
                 disconnected.append(client)
-        
+
         for client in disconnected:
             socket_clients.remove(client)
             try:
@@ -261,7 +254,7 @@ def notification_agent_thread():
     global notification_state
     while not stop_event.is_set():
         prev_state = notification_state
-        
+
         if state.in_overspeed:
             notification_state = NotificationState.OVERSPEED
         elif state.break_finish != -1:
@@ -271,10 +264,9 @@ def notification_agent_thread():
         elif state.last_zero == -1:
             notification_state = NotificationState.TYPING
 
-        print(notification_state)
-        
         if prev_state != notification_state:
             broadcast_notification_state(notification_state.value)
+            print("state changed:", notification_state)
 
         time.sleep(0.5)
 
@@ -295,7 +287,7 @@ def main():
 
     notification_agent = threading.Thread(target=notification_agent_thread,
                                           daemon=True)
-    
+
     socket_server = threading.Thread(target=socket_server_thread,
                                      daemon=True)
 
