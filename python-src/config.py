@@ -1,6 +1,6 @@
 """Configuration management for usage-bar monitor."""
-import os
 from pathlib import Path
+
 import yaml
 
 
@@ -28,6 +28,7 @@ def load_config():
 
 class Config:
     """Configuration holder."""
+
     def __init__(self):
         config = load_config()
         self.break_threshold = config['break_threshold']

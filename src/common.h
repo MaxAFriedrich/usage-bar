@@ -18,7 +18,7 @@
 /* Color definitions from colors.md */
 #define COLOR_UNKNOWN		0x000000  /* black - initial state */
 #define COLOR_BREAK_OVER	0x007051  /* green */
-#define COLOR_BREAK		0x142f8c  /* blue */
+#define COLOR_BREAK		    0x142f8c  /* blue */
 #define COLOR_TYPING		0x8C4914  /* orange */
 #define COLOR_OVERSPEED		0xB70000  /* red */
 #define COLOR_BREAK_DUE		0xFF6D00  /* orange for break_due */

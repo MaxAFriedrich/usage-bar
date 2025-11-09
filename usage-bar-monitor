@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Wrapper script for usage-bar monitor."""
 import sys
-import os
 from pathlib import Path
 
 # Determine where to look for python-src
