@@ -128,6 +128,22 @@ journalctl --user -u usage-bar-monitor.service -f
 journalctl --user -u usage-bar-gui.service -f
 ```
 
+### Pause Services Temporarily
+
+To temporarily pause the usage bar services (e.g., during a meeting or video call):
+
+```bash
+usage-bar-pause <duration>
+```
+
+Examples:
+```bash
+usage-bar-pause 2h   # Pause for 2 hours
+usage-bar-pause 60m  # Pause for 60 minutes
+```
+
+This utility stops the services, waits for the specified duration, then automatically restarts them.
+
 ### Uninstall
 
 ```bash

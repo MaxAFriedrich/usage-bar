@@ -28,6 +28,7 @@ install: all
 	install -d $(BINDIR)
 	install -m 755 $(TARGET) $(BINDIR)/
 	install -m 755 usage-bar-monitor $(BINDIR)/
+	install -m 755 pause.py $(BINDIR)/usage-bar-pause
 
 	# Install Python source files
 	install -d $(SHAREDIR)/python-src
@@ -68,6 +69,7 @@ uninstall:
 	rm -f $(SYSTEMD_USER_DIR)/usage-bar-gui.service
 	rm -f $(BINDIR)/$(TARGET)
 	rm -f $(BINDIR)/usage-bar-monitor
+	rm -f $(BINDIR)/usage-bar-pause
 	rm -rf $(SHAREDIR)
 	systemctl --user daemon-reload
 	@echo ""
