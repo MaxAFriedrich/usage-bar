@@ -3,8 +3,23 @@ import select
 import struct
 import threading
 import time
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
+
+def load_config():
+    """Load configuration from config.yml"""
+    config_path = Path(__file__).parent / "config.yml"
+    with open(config_path, 'r') as f:
+        return yaml.safe_load(f)
+
+
+config = load_config()
+BREAK_THRESHOLD = config['break_threshold']
+OVERSPEED_THRESHOLD = config['overspeed_threshold']
+OVERSPEED_COUNT_MULTIPLIER = config['overspeed_count_multiplier']
+MAX_OVERSPEED_PENALTY = config['max_overspeed_penalty']
+
 
 # Shared data structure
 timestamps = []
@@ -94,13 +109,6 @@ def get_event_count():
     """Get current count of events"""
     with timestamps_lock:
         return len(timestamps)
-
-
-BREAK_THRESHOLD = 20
-OVERSPEED_THRESHOLD = 35
-# multiply overspeed threshold by this number to calculate break penalty
-OVERSPEED_COUNT_MULTIPLIER = 0.5
-MAX_OVERSPEED_PENALTY = 60
 
 
 @dataclass

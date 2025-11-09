@@ -1,0 +1,11 @@
+# Threshold for break time (in seconds)
+break_threshold: 20
+
+# Threshold for overspeed detection (events per 10 seconds)
+overspeed_threshold: 35
+
+# Multiply overspeed threshold by this number to calculate break penalty
+overspeed_count_multiplier: 0.5
+
+# Maximum overspeed penalty (in seconds)
+max_overspeed_penalty: 60
