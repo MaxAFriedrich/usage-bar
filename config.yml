@@ -1,5 +1,8 @@
 # Threshold for break time (in seconds)
-break_threshold: 60
+break_threshold: 50
+
+# Base length of break (in seconds)
+break_length: 10
 
 # Threshold for overspeed detection (events per 10 seconds)
 overspeed_threshold: 35

@@ -42,6 +42,7 @@ The monitor tracks:
 
 - **Event count** - Number of keyboard/mouse events in the last 10 seconds
 - **Break threshold** - Time before break is required (configurable in `config.yml`)
+- **Break length** - Base duration of the break (configurable in `config.yml`)
 - **Overspeed threshold** - Event count that triggers overspeed warning
 - **Overspeed penalty** - Extra break time added when typing too fast
 
@@ -64,8 +65,9 @@ The configuration file is searched in the following order:
 Edit `config.yml` to adjust thresholds:
 
 ```yaml
-break_threshold: 300           # Seconds of typing before break needed
-overspeed_threshold: 15        # Events/10s that trigger overspeed
+break_threshold: 50            # Seconds of typing before break needed
+break_length: 10               # Base length of break (in seconds)
+overspeed_threshold: 35        # Events/10s that trigger overspeed
 overspeed_count_multiplier: 2  # Penalty multiplier per overspeed event
 max_overspeed_penalty: 600     # Maximum penalty seconds
 ```
