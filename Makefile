@@ -8,6 +8,8 @@ OBJS = $(SRCDIR)/main.o $(SRCDIR)/window.o $(SRCDIR)/socket.o
 
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
+SHAREDIR = $(PREFIX)/share/usage-bar
+SYSCONFDIR ?= /etc/usage-bar
 SYSTEMD_USER_DIR = $(HOME)/.config/systemd/user
 
 all: $(TARGET)
@@ -22,16 +24,42 @@ clean:
 	rm -f $(TARGET) $(SRCDIR)/*.o
 
 install: all
+	# Install binaries
 	install -d $(BINDIR)
 	install -m 755 $(TARGET) $(BINDIR)/
-	install -m 755 input_monitor.py $(BINDIR)/usage-bar-monitor
+	install -m 755 usage-bar-monitor $(BINDIR)/
+	
+	# Install Python source files
+	install -d $(SHAREDIR)/python-src
+	install -m 644 python-src/*.py $(SHAREDIR)/python-src/
+	
+	# Install default config to user directory
+	install -d $(HOME)/.config/usage-bar
+	if [ ! -f $(HOME)/.config/usage-bar/config.yml ]; then \
+		install -m 644 config.yml $(HOME)/.config/usage-bar/; \
+		echo "Installed config to $(HOME)/.config/usage-bar/config.yml"; \
+	else \
+		echo "Config already exists at $(HOME)/.config/usage-bar/config.yml (not overwriting)"; \
+	fi
+	
+	# Install systemd user services
 	install -d $(SYSTEMD_USER_DIR)
 	sed 's|@BINDIR@|$(BINDIR)|g' systemd/usage-bar-monitor.service > $(SYSTEMD_USER_DIR)/usage-bar-monitor.service
 	sed 's|@BINDIR@|$(BINDIR)|g' systemd/usage-bar-gui.service > $(SYSTEMD_USER_DIR)/usage-bar-gui.service
 	systemctl --user daemon-reload
-	@echo "Services installed. Enable and start with:"
+	
+	@echo ""
+	@echo "Installation complete!"
+	@echo "Config location: $(HOME)/.config/usage-bar/config.yml"
+	@echo ""
+	@echo "To enable and start services:"
 	@echo "  systemctl --user enable --now usage-bar-monitor.service"
 	@echo "  systemctl --user enable --now usage-bar-gui.service"
+
+install-system-config:
+	# Install system-wide default config (requires root)
+	install -d $(SYSCONFDIR)
+	install -m 644 config.yml $(SYSCONFDIR)/
 
 uninstall:
 	systemctl --user stop usage-bar-monitor.service usage-bar-gui.service 2>/dev/null || true
@@ -40,6 +68,10 @@ uninstall:
 	rm -f $(SYSTEMD_USER_DIR)/usage-bar-gui.service
 	rm -f $(BINDIR)/$(TARGET)
 	rm -f $(BINDIR)/usage-bar-monitor
+	rm -rf $(SHAREDIR)
 	systemctl --user daemon-reload
+	@echo ""
+	@echo "Uninstalled. User config remains at $(HOME)/.config/usage-bar/"
+	@echo "To remove config: rm -rf $(HOME)/.config/usage-bar/"
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install install-system-config uninstall

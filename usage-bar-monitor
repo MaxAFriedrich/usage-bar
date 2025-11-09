@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Wrapper script for usage-bar monitor."""
+import sys
+import os
+from pathlib import Path
+
+# Add python-src to path
+script_dir = Path(__file__).parent.resolve()
+python_src = script_dir / "python-src"
+
+# For installed version, look in the installation directory
+if not python_src.exists():
+    # Try installed location
+    python_src = Path("/usr/local/share/usage-bar/python-src")
+    if not python_src.exists():
+        python_src = Path("/usr/share/usage-bar/python-src")
+
+if python_src.exists():
+    sys.path.insert(0, str(python_src))
+else:
+    print(f"Error: Could not find python-src directory", file=sys.stderr)
+    print(f"Looked in: {python_src}", file=sys.stderr)
+    sys.exit(1)
+
+from main import main
+
+if __name__ == "__main__":
+    sys.exit(main())

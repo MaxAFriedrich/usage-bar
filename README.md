@@ -58,14 +58,21 @@ State flow:
 
 ### Configuration
 
+The configuration file is searched in the following order:
+1. `~/.config/usage-bar/config.yml` (user config)
+2. `/etc/usage-bar/config.yml` (system config)
+3. `./config.yml` (current directory, for development)
+
 Edit `config.yml` to adjust thresholds:
 
 ```yaml
-break_threshold: 180             # Seconds of typing before break needed
-overspeed_threshold: 30          # Events/10s that trigger overspeed
-overspeed_count_multiplier: 0.5  # Penalty multiplier per overspeed event
-max_overspeed_penalty: 60        # Maximum penalty seconds
+break_threshold: 300           # Seconds of typing before break needed
+overspeed_threshold: 15        # Events/10s that trigger overspeed
+overspeed_count_multiplier: 2  # Penalty multiplier per overspeed event
+max_overspeed_penalty: 600     # Maximum penalty seconds
 ```
+
+The `make install` command automatically copies the default config to `~/.config/usage-bar/config.yml` if it doesn't already exist.
 
 ## Building
 
@@ -170,19 +177,17 @@ For development and testing, you can run the components manually without install
 ### Terminal 1 - Python Monitor
 
 ```bash
-# Run directly with Python
-python3 input_monitor.py
+# Run using the wrapper script
+./usage-bar-monitor
 
-# Or with Poetry
-poetry run python input_monitor.py
+# Or run directly with Python (from project root)
+cd python-src && python3 main.py
 ```
 
 **Note:** You may need to run with `sudo` if you don't have permission to access `/dev/input/event*` devices:
 
 ```bash
-sudo python3 input_monitor.py
-# or
-sudo poetry run python input_monitor.py
+sudo ./usage-bar-monitor
 ```
 
 ### Terminal 2 - C GUI
@@ -221,28 +226,40 @@ You can also test the socket directly:
 
 ```bash
 # In one terminal
-python3 input_monitor.py
+./usage-bar-monitor
 
 # In another terminal, connect to the socket
 nc -U /tmp/usage-bar.sock
 
 # You'll see state numbers printed as they change
-# 0 = BREAK_OVER, 1 = BREAK, 2 = TYPING, 3 = OVERSPEED, 4 = BREAK_DUE
+# -1 = UNKNOWN, 0 = BREAK_OVER, 1 = BREAK, 2 = TYPING, 3 = OVERSPEED, 4 = BREAK_DUE
 ```
 
 ## Project Structure
 
 ```
 usage-bar/
-├── src/
-│   ├── common.h           # Shared constants and state definitions
-│   ├── window.h/c         # X11 window management and display
-│   ├── socket.h/c         # Unix socket communication
-│   ├── main.c             # Main GUI entry point
-│   └── input_monitor.py   # Python event monitor
+├── src/                       # C GUI source files
+│   ├── common.h               # Shared constants and state definitions
+│   ├── window.h/c             # X11 window management and display
+│   ├── socket.h/c             # Unix socket communication
+│   └── main.c                 # Main GUI entry point
+├── python-src/                # Python monitor source files
+│   ├── __init__.py            # Package initialization
+│   ├── main.py                # Main entry point
+│   ├── config.py              # Configuration management
+│   ├── input_listener.py      # Input device event monitoring
+│   ├── state_machine.py       # State tracking and transitions
+│   └── socket_server.py       # Unix socket server
 ├── systemd/
 │   ├── usage-bar-monitor.service  # Python monitor service
 │   └── usage-bar-gui.service      # C GUI service
+├── usage-bar-monitor          # Python monitor wrapper script
+├── Makefile                   # Build system
+├── config.yml                 # Default configuration file
+├── colors.md                  # Color definitions
+└── README.md                  # This file
+```
 ├── Makefile               # Build system
 ├── config.yml             # Configuration file
 ├── colors.md              # Color definitions
