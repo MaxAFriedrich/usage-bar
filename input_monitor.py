@@ -1,5 +1,6 @@
 import os
 import select
+import socket
 import struct
 import threading
 import time
@@ -22,6 +23,7 @@ BREAK_THRESHOLD = config['break_threshold']
 OVERSPEED_THRESHOLD = config['overspeed_threshold']
 OVERSPEED_COUNT_MULTIPLIER = config['overspeed_count_multiplier']
 MAX_OVERSPEED_PENALTY = config['max_overspeed_penalty']
+SOCKET_PATH = "/tmp/usage-bar-notification.sock"
 
 # Shared data structure
 timestamps = []
@@ -202,9 +204,64 @@ class NotificationState(str, Enum):
     OVERSPEED = "#B70000"  # red
 
 
-def notification_agent_thread():
-    notification_state = NotificationState.BREAK
+notification_state = NotificationState.BREAK
+socket_clients = []
+socket_clients_lock = threading.Lock()
+
+
+def socket_server_thread():
+    """Thread that manages the Unix socket server"""
+    # Remove existing socket file if it exists
+    if os.path.exists(SOCKET_PATH):
+        os.unlink(SOCKET_PATH)
+    
+    server_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    server_socket.bind(SOCKET_PATH)
+    server_socket.listen(5)
+    server_socket.settimeout(1.0)
+    
+    print(f"Socket server listening on {SOCKET_PATH}")
+    
     while not stop_event.is_set():
+        try:
+            client_socket, _ = server_socket.accept()
+            with socket_clients_lock:
+                socket_clients.append(client_socket)
+            print("Client connected to socket")
+        except socket.timeout:
+            continue
+        except Exception as e:
+            if not stop_event.is_set():
+                print(f"Socket server error: {e}")
+    
+    server_socket.close()
+    if os.path.exists(SOCKET_PATH):
+        os.unlink(SOCKET_PATH)
+
+
+def broadcast_notification_state(state_color):
+    """Send notification state to all connected socket clients"""
+    with socket_clients_lock:
+        disconnected = []
+        for client in socket_clients:
+            try:
+                client.sendall(f"{state_color}\n".encode())
+            except Exception:
+                disconnected.append(client)
+        
+        for client in disconnected:
+            socket_clients.remove(client)
+            try:
+                client.close()
+            except Exception:
+                pass
+
+
+def notification_agent_thread():
+    global notification_state
+    while not stop_event.is_set():
+        prev_state = notification_state
+        
         if state.in_overspeed:
             notification_state = NotificationState.OVERSPEED
         elif state.break_finish != -1:
@@ -215,6 +272,9 @@ def notification_agent_thread():
             notification_state = NotificationState.TYPING
 
         print(notification_state)
+        
+        if prev_state != notification_state:
+            broadcast_notification_state(notification_state.value)
 
         time.sleep(0.5)
 
@@ -234,11 +294,15 @@ def main():
     counter = threading.Thread(target=counter_thread, daemon=True)
 
     notification_agent = threading.Thread(target=notification_agent_thread,
-                                         daemon=True)
+                                          daemon=True)
+    
+    socket_server = threading.Thread(target=socket_server_thread,
+                                     daemon=True)
 
     listener.start()
     counter.start()
     notification_agent.start()
+    socket_server.start()
 
     try:
         # Keep main thread alive
