@@ -204,7 +204,7 @@ class NotificationState(str, Enum):
 
 def notification_agent_thread():
     notification_state = NotificationState.BREAK
-    while True:
+    while not stop_event.is_set():
         if state.in_overspeed:
             notification_state = NotificationState.OVERSPEED
         elif state.break_finish != -1:
@@ -214,7 +214,6 @@ def notification_agent_thread():
         elif state.last_zero == -1:
             notification_state = NotificationState.TYPING
 
-        # print(chr(27) + "[2J")
         print(notification_state)
 
         time.sleep(0.5)
@@ -234,7 +233,8 @@ def main():
                                 daemon=True)
     counter = threading.Thread(target=counter_thread, daemon=True)
 
-    notification_agent = threading.Thread(target=notification_agent_thread)
+    notification_agent = threading.Thread(target=notification_agent_thread,
+                                         daemon=True)
 
     listener.start()
     counter.start()
@@ -247,11 +247,8 @@ def main():
 
     except KeyboardInterrupt:
         print("\nExiting...")
-        stop_event.set()
-        listener.join(timeout=1)
-        counter.join(timeout=1)
-        notification_agent.join(timeout=1)
     finally:
+        stop_event.set()
         cleanup_devices(devices)
 
     return 0
