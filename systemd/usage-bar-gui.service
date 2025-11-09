@@ -1,0 +1,14 @@
+[Unit]
+Description=Usage Bar GUI - Visual Notification Display
+After=graphical-session.target
+Requires=usage-bar-monitor.service
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+ExecStart=@BINDIR@/overspeed_monitor
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

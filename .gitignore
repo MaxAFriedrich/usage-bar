@@ -1,1 +1,39 @@
-.idea
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Compiled binaries
+overspeed_monitor
+*.o
+*.so
+*.a
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Poetry
+poetry.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Config overrides (if any)
+config.local.yml
+
