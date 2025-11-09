@@ -24,7 +24,7 @@ clean:
 install: all
 	install -d $(BINDIR)
 	install -m 755 $(TARGET) $(BINDIR)/
-	install -m 755 $(SRCDIR)/input_monitor.py $(BINDIR)/usage-bar-monitor
+	install -m 755 input_monitor.py $(BINDIR)/usage-bar-monitor
 	install -d $(SYSTEMD_USER_DIR)
 	sed 's|@BINDIR@|$(BINDIR)|g' systemd/usage-bar-monitor.service > $(SYSTEMD_USER_DIR)/usage-bar-monitor.service
 	sed 's|@BINDIR@|$(BINDIR)|g' systemd/usage-bar-gui.service > $(SYSTEMD_USER_DIR)/usage-bar-gui.service

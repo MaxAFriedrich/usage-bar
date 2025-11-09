@@ -162,6 +162,9 @@ void show_small_indicator(struct window_state *ws, int state)
 	unsigned long color;
 
 	switch (state) {
+	case STATE_UNKNOWN:
+		color = COLOR_UNKNOWN;
+		break;
 	case STATE_BREAK_OVER:
 		color = COLOR_BREAK_OVER;
 		break;

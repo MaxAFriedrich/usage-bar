@@ -14,12 +14,13 @@ The two components communicate via a Unix socket (`/tmp/usage-bar.sock`).
 
 ## State Machine
 
-The system uses a 5-state notification system to provide visual feedback about your typing activity:
+The system uses a 6-state notification system to provide visual feedback about your typing activity:
 
 ### States
 
 | State          | Value | Visual Display                                  | Meaning                                                          |
 |----------------|-------|-------------------------------------------------|------------------------------------------------------------------|
+| **UNKNOWN**    | -1    | Small black square (top-left)                   | Initial state on startup, waiting for monitor connection         |
 | **BREAK_OVER** | 0     | Small green square (top-left)                   | Break period completed, ready to type                            |
 | **BREAK**      | 1     | Small blue square (top-left)                    | Currently on break (no typing detected)                          |
 | **TYPING**     | 2     | Small orange square (top-left)                  | Normal typing activity                                           |
@@ -28,6 +29,7 @@ The system uses a 5-state notification system to provide visual feedback about y
 
 ### State Colors
 
+- **Black** (`#000000`) - Initial/Unknown state
 - **Green** (`#007051`) - Break is over, safe to continue
 - **Blue** (`#142f8c`) - On break
 - **Orange** (`#8C4914`) - Normal typing or break needed
@@ -45,9 +47,12 @@ The monitor tracks:
 
 State flow:
 
-1. **TYPING** → When events detected and within normal threshold
-2. **OVERSPEED** → When event count exceeds overspeed threshold
-3. **BREAK_DUE** → When typing time exceeds break threshold
+1. **UNKNOWN** → Initial state on GUI startup
+2. **TYPING** → When events detected and within normal threshold
+3. **OVERSPEED** → When event count exceeds overspeed threshold
+4. **BREAK_DUE** → When typing time exceeds break threshold
+5. **BREAK** → When no events detected (user stopped typing)
+6. **BREAK_OVER** → When break duration completed
 4. **BREAK** → When no events detected (user stopped typing)
 5. **BREAK_OVER** → When break duration completed
 

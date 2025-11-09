@@ -14,6 +14,9 @@ int main(void)
 
 	init_x11(&ws);
 
+	/* Show black indicator on startup until we receive first state */
+	show_small_indicator(&ws, STATE_UNKNOWN);
+
 	printf("Connecting to socket at %s\n", SOCKET_PATH);
 
 	while (1) {
