@@ -45,7 +45,7 @@ class TypingState:
                 self.typing_start = -1
                 self.break_finish = (
                         time.time() +
-                        self.config.break_threshold +
+                        self.config.break_length +
                         self.overspeed_penalty
                 )
                 return
@@ -76,7 +76,7 @@ class TypingState:
 
     def get_notification_state(self):
         """Determine which notification state to display."""
-        break_due = (self.typing_start + self.config.break_length +
+        break_due = (self.typing_start + self.config.break_threshold +
                      self.overspeed_penalty)
 
         if self.in_overspeed:
