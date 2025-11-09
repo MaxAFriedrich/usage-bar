@@ -125,12 +125,15 @@ class State:
     in_overspeed: bool = False
     # time the break will finish
     break_finish: float = -1
+    # start of typing
+    typing_start: float = -1
 
     def set(self, count) -> None:
         if count == 0:
             if self.last_zero == -1:
                 # entered state
                 self.last_zero = time.time()
+                self.typing_start = -1
                 self.break_finish = (
                         time.time() +
                         BREAK_THRESHOLD +
@@ -144,9 +147,11 @@ class State:
                 self.break_finish = -1
             return
 
-        # make sure we know we are typing
-        self.last_zero = -1
-        self.break_finish = -1
+        if count != 0 and self.last_zero != -1:
+            # just started typing
+            self.last_zero = -1
+            self.break_finish = -1
+            self.typing_start = time.time()
 
         if count > OVERSPEED_THRESHOLD:
             self.in_overspeed = True
@@ -195,6 +200,7 @@ class NotificationState(int, Enum):
     BREAK = 1
     TYPING = 2
     OVERSPEED = 3
+    BREAK_DUE = 4
 
 
 notification_state = NotificationState.BREAK
@@ -255,13 +261,17 @@ def notification_agent_thread():
     while not stop_event.is_set():
         prev_state = notification_state
 
+        break_due = state.typing_start + BREAK_THRESHOLD + state.overspeed_penalty
+
         if state.in_overspeed:
             notification_state = NotificationState.OVERSPEED
         elif state.break_finish != -1:
             notification_state = NotificationState.BREAK
         elif state.last_zero != -1:
             notification_state = NotificationState.BREAK_OVER
-        elif state.last_zero == -1:
+        elif time.time() > break_due:
+            notification_state = NotificationState.BREAK_DUE
+        elif state.typing_start != -1:
             notification_state = NotificationState.TYPING
 
         if prev_state != notification_state:
