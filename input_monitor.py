@@ -4,6 +4,7 @@ import struct
 import threading
 import time
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 import yaml
@@ -159,13 +160,14 @@ class State:
             self.overspeed_penalty = MAX_OVERSPEED_PENALTY
 
 
+state = State()
+
+
 def counter_thread():
+    global state
     """Thread that removes old events and prints count every 0.5 seconds"""
-    state = State()
     try:
         while not stop_event.is_set():
-            # Clear screen
-            print(chr(27) + "[2J")
             current_time = time.time()
             cutoff_time = current_time - 10.0
 
@@ -174,13 +176,13 @@ def counter_thread():
 
             state.set(count)
 
-            print(
-                f"count: {count}, last_zero: {state.last_zero}, "
-                f"overspeed_penalty: {state.overspeed_penalty} "
-                f"in_break {state.break_finish != -1} "
-                f"break_finish: {state.break_finish}"
-            )
-
+            # print(
+            #     f"count: {count}, last_zero: {state.last_zero}, "
+            #     f"overspeed_penalty: {state.overspeed_penalty} "
+            #     f"in_break {state.break_finish != -1} "
+            #     f"break_finish: {state.break_finish}"
+            # )
+            #
             time.sleep(0.1)
 
     except Exception as e:
@@ -191,6 +193,31 @@ def cleanup_devices(devices):
     """Close all device file descriptors"""
     for fd, _ in devices:
         os.close(fd)
+
+
+class NotificationState(str, Enum):
+    BREAK_OVER = "#007051"  # green
+    BREAK = "#142f8c"  # blue
+    TYPING = "#8C4914"  # orange
+    OVERSPEED = "#B70000"  # red
+
+
+def notification_agent_thread():
+    notification_state = NotificationState.BREAK
+    while True:
+        if state.in_overspeed:
+            notification_state = NotificationState.OVERSPEED
+        elif state.break_finish != -1:
+            notification_state = NotificationState.BREAK
+        elif state.last_zero != -1:
+            notification_state = NotificationState.BREAK_OVER
+        elif state.last_zero == -1:
+            notification_state = NotificationState.TYPING
+
+        # print(chr(27) + "[2J")
+        print(notification_state)
+
+        time.sleep(0.5)
 
 
 def main():
@@ -207,8 +234,11 @@ def main():
                                 daemon=True)
     counter = threading.Thread(target=counter_thread, daemon=True)
 
+    notification_agent = threading.Thread(target=notification_agent_thread)
+
     listener.start()
     counter.start()
+    notification_agent.start()
 
     try:
         # Keep main thread alive
@@ -220,6 +250,7 @@ def main():
         stop_event.set()
         listener.join(timeout=1)
         counter.join(timeout=1)
+        notification_agent.join(timeout=1)
     finally:
         cleanup_devices(devices)
 
