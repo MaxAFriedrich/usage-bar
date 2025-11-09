@@ -3,9 +3,11 @@ import select
 import struct
 import threading
 import time
-import yaml
 from dataclasses import dataclass
 from pathlib import Path
+
+import yaml
+
 
 def load_config():
     """Load configuration from config.yml"""
@@ -19,7 +21,6 @@ BREAK_THRESHOLD = config['break_threshold']
 OVERSPEED_THRESHOLD = config['overspeed_threshold']
 OVERSPEED_COUNT_MULTIPLIER = config['overspeed_count_multiplier']
 MAX_OVERSPEED_PENALTY = config['max_overspeed_penalty']
-
 
 # Shared data structure
 timestamps = []
@@ -119,22 +120,30 @@ class State:
     overspeed_penalty: float = 0
     # currently in overspeed state
     in_overspeed: bool = False
+    # time the break will finish
+    break_finish: float = -1
 
     def set(self, count) -> None:
         if count == 0:
             if self.last_zero == -1:
                 # entered state
                 self.last_zero = time.time()
+                self.break_finish = (
+                        time.time() +
+                        BREAK_THRESHOLD +
+                        self.overspeed_penalty
+                )
                 return
-            time_diff = time.time() - self.last_zero
-            if time_diff > (BREAK_THRESHOLD + self.overspeed_penalty):
+            if time.time() > self.break_finish:
                 # break is over, so reset
                 self.overspeed_penalty = 0
                 self.in_overspeed = False
+                self.break_finish = -1
             return
 
         # make sure we know we are typing
         self.last_zero = -1
+        self.break_finish = -1
 
         if count > OVERSPEED_THRESHOLD:
             self.in_overspeed = True
@@ -167,7 +176,10 @@ def counter_thread():
 
             print(
                 f"count: {count}, last_zero: {state.last_zero}, "
-                f"overspeed_penalty: {state.overspeed_penalty}")
+                f"overspeed_penalty: {state.overspeed_penalty} "
+                f"in_break {state.break_finish != -1} "
+                f"break_finish: {state.break_finish}"
+            )
 
             time.sleep(0.1)
 
