@@ -30,8 +30,8 @@ systemctl --user enable --now usage-bar-gui.service
 ```
 
 This will:
-- Install binaries to `/usr/local/bin/`
-- Install Python modules to `/usr/local/share/usage-bar/python-src/`
+- Install binaries to `~/.local/bin/` (or `$PREFIX/bin` if PREFIX is set)
+- Install Python modules to `~/.local/share/usage-bar/python-src/`
 - Copy default config to `~/.config/usage-bar/config.yml` (if not exists)
 - Install systemd user services
 
@@ -76,5 +76,3 @@ To also remove your config:
 ```bash
 rm -rf ~/.config/usage-bar/
 ```
-
-See [README.md](README.md) for full documentation.
