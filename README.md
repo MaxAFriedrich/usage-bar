@@ -1,7 +1,7 @@
 # Usage Bar - Typing Activity Monitor with Visual Notifications
 
 A keyboard and mouse activity monitoring system that helps prevent typing-related strain injuries by tracking your
-activity and displaying visual notifications when you need to take breaks.
+activity and displaying visual notifications when you need to take breaks. This app does not require root.
 
 ## Overview
 

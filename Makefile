@@ -6,7 +6,7 @@ TARGET = overspeed_monitor
 SRCDIR = src
 OBJS = $(SRCDIR)/main.o $(SRCDIR)/window.o $(SRCDIR)/socket.o
 
-PREFIX ?= /usr/local
+PREFIX ?= $(HOME)/.local
 BINDIR = $(PREFIX)/bin
 SHAREDIR = $(PREFIX)/share/usage-bar
 SYSCONFDIR ?= /etc/usage-bar
@@ -28,11 +28,11 @@ install: all
 	install -d $(BINDIR)
 	install -m 755 $(TARGET) $(BINDIR)/
 	install -m 755 usage-bar-monitor $(BINDIR)/
-	
+
 	# Install Python source files
 	install -d $(SHAREDIR)/python-src
 	install -m 644 python-src/*.py $(SHAREDIR)/python-src/
-	
+
 	# Install default config to user directory
 	install -d $(HOME)/.config/usage-bar
 	if [ ! -f $(HOME)/.config/usage-bar/config.yml ]; then \
@@ -41,13 +41,13 @@ install: all
 	else \
 		echo "Config already exists at $(HOME)/.config/usage-bar/config.yml (not overwriting)"; \
 	fi
-	
+
 	# Install systemd user services
 	install -d $(SYSTEMD_USER_DIR)
 	sed 's|@BINDIR@|$(BINDIR)|g' systemd/usage-bar-monitor.service > $(SYSTEMD_USER_DIR)/usage-bar-monitor.service
 	sed 's|@BINDIR@|$(BINDIR)|g' systemd/usage-bar-gui.service > $(SYSTEMD_USER_DIR)/usage-bar-gui.service
 	systemctl --user daemon-reload
-	
+
 	@echo ""
 	@echo "Installation complete!"
 	@echo "Config location: $(HOME)/.config/usage-bar/config.yml"

@@ -4,23 +4,37 @@ import sys
 import os
 from pathlib import Path
 
-# Add python-src to path
-script_dir = Path(__file__).parent.resolve()
-python_src = script_dir / "python-src"
+# Determine where to look for python-src
+script_path = Path(__file__).resolve()
+script_dir = script_path.parent
 
-# For installed version, look in the installation directory
-if not python_src.exists():
-    # Try installed location
-    python_src = Path("/usr/local/share/usage-bar/python-src")
-    if not python_src.exists():
-        python_src = Path("/usr/share/usage-bar/python-src")
+# Search paths in priority order
+search_paths = [
+    # Development: relative to script location
+    script_dir / "python-src",
+    script_dir.parent / "python-src",
+    # Installed: relative to PREFIX
+    script_dir.parent / "share" / "usage-bar" / "python-src",
+    Path("/usr/local/share/usage-bar/python-src"),
+    Path("/usr/share/usage-bar/python-src"),
+    # If installed in ~/.local/bin
+    script_dir.parent / "share" / "usage-bar" / "python-src",
+]
 
-if python_src.exists():
-    sys.path.insert(0, str(python_src))
-else:
+python_src = None
+for path in search_paths:
+    if path.exists() and (path / "main.py").exists():
+        python_src = path
+        break
+
+if python_src is None:
     print(f"Error: Could not find python-src directory", file=sys.stderr)
-    print(f"Looked in: {python_src}", file=sys.stderr)
+    print(f"Searched in:", file=sys.stderr)
+    for path in search_paths:
+        print(f"  {path}", file=sys.stderr)
     sys.exit(1)
+
+sys.path.insert(0, str(python_src))
 
 from main import main
 
